@@ -37,6 +37,11 @@ Get-MsolAllSettings | ForEach Values
 $settings = Get-MsolAllSettings | where-object {$_.displayname -eq “Group.Unified”}
 Remove-MsolSettings -SettingId $settings.ObjectId 
 
+# Set default settings for Azure AD Group restriction settings
+$template = Get-MsolSettingTemplate –TemplateId 62375ab9-6b52-47ed-826b-58e47e0e304b_
+$setting = $template.CreateSettingsObject()_
+New-MsolSettings –SettingsObject $setting 
+
 # Set OWA Mailbox Policy to restrict group creation for exchange Only
 Set-OwaMailboxPolicy -Identity test.com\OwaMailboxPolicy-Default -GroupCreationEnabled $false
 
