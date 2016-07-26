@@ -22,26 +22,6 @@ Get-UnifiedGroup |
     Label='Owners'} |
     Format-Table Alias, Members, Owners
 
-# Setup Azure AD Group restriction creation by allowed group ID
-Connect-MsolService
-$template = Get-MsolSettingTemplate –TemplateId 62375ab9-6b52-47ed-826b-58e47e0e304b
-$setting = $template.CreateSettingsObject()
-$setting[“EnableGroupCreation”] = “false”
-$setting[“GroupCreationAllowedGroupId”] = “a53ba62d-ee1b-4764-b8a1-20bf3bc89afc”
-New-MsolSettings –SettingsObject $setting
-
-# Check Azure AD Group restriction settings
-Get-MsolAllSettings | ForEach Values
-
-# Remove Azure AD Group restriction settings
-$settings = Get-MsolAllSettings | where-object {$_.displayname -eq “Group.Unified”}
-Remove-MsolSettings -SettingId $settings.ObjectId 
-
-# Set default settings for Azure AD Group restriction settings
-$template = Get-MsolSettingTemplate –TemplateId 62375ab9-6b52-47ed-826b-58e47e0e304b_
-$setting = $template.CreateSettingsObject()_
-New-MsolSettings –SettingsObject $setting 
-
 # Set OWA Mailbox Policy to restrict group creation for exchange Only
 Set-OwaMailboxPolicy -Identity test.com\OwaMailboxPolicy-Default -GroupCreationEnabled $false
 
@@ -110,3 +90,50 @@ ForEach ($spoO365GroupSite in $spoO365GroupSites){
         Write-Host "Office 365 Group Files Url: " $spoO365GroupSite.SharePointSiteUrl " - Storage being used (MB): " $spoO365GroupFilesUsedSpace " MB"                    
     }      
 } 
+
+
+##### Connect-MsolService for all below ######
+##############################################
+
+# Restrict all Group creation with no authorized users$group = Get-MsolGroup -All | Where-Object {$_.DisplayName -eq “ENTER GROUP DISPLAY NAME HERE”} 
+$template = Get-MsolAllSettingTemplate | where-object {$_.displayname -eq “Group.Unified”}
+$setting = $template.CreateSettingsObject()
+$setting[“EnableGroupCreation”] = “false”
+New-MsolSettings –SettingsObject $setting
+
+# Setup Azure AD Group restriction creation by allowed group ID, the declared group will be able to create O365 groups
+$group = Get-MsolGroup -All | Where-Object {$_.DisplayName -eq “ENTER GROUP DISPLAY NAME HERE”} 
+$template = Get-MsolAllSettingTemplate | where-object {$_.displayname -eq “Group.Unified”}
+$setting = $template.CreateSettingsObject()
+$setting[“EnableGroupCreation”] = “false”
+$setting[“GroupCreationAllowedGroupId”] = $group.ObjectId
+New-MsolSettings –SettingsObject $setting
+
+# Check Azure AD Group restriction settings
+Get-MsolAllSettings | ForEach Values
+
+# Remove Azure AD Group restriction settings by removing all settings - This removes all settings not just group creation
+$settings = Get-MsolAllSettings | where-object {$_.displayname -eq “Group.Unified”}
+Remove-MsolSettings -SettingId $settings.ObjectId 
+
+# Set default settings for Azure AD Group restriction settings by creating a new default template - This sets all settings back to default
+$template = Get-MsolAllSettingTemplate | where-object {$_.displayname -eq “Group.Unified”}
+$setting = $template.CreateSettingsObject()
+New-MsolSettings –SettingsObject $setting 
+
+# Set group creation settings to false and remove security group directly without removing all settings
+$settings = Get-MsolAllSettings | where-object {$_.displayname -eq “Group.Unified”}
+$singlesettings = Get-MsolSettings -SettingId $settings.ObjectId
+$value = $singlesettings.GetSettingsValue()
+$value["EnableGroupCreation"] = "false" 
+$value["GroupCreationAllowedGroupId"] = ""
+Set-MsolSettings -SettingId $settings.ObjectId -SettingsValue $value
+
+# Set group creation settings to true and include a security group without creating a new template
+$group = Get-MsolGroup -All | Where-Object {$_.DisplayName -eq “ENTER GROUP DISPLAY NAME HERE”} 
+$settings = Get-MsolAllSettings | where-object {$_.displayname -eq “Group.Unified”}
+$singlesettings = Get-MsolSettings -SettingId $settings.ObjectId
+$value = $singlesettings.GetSettingsValue()
+$value["EnableGroupCreation"] = "false" 
+$value["GroupCreationAllowedGroupId"] = $group.ObjectId
+Set-MsolSettings -SettingId $settings.ObjectId -SettingsValue $value
