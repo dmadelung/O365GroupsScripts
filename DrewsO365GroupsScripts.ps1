@@ -1,3 +1,9 @@
+###########################################
+# Thank you to all who helped contribute.  
+# Large thanks to Tony Redmond, Santhosh Balakrishnan, and Juan Carlos Martin for providing multiple scripts.  
+# This is mainly a collection of the great work that other people have put together into a central source and I am just the middle man
+###########################################
+
 # Establish a remote session to Exchange Online
 $creds = Get-Credential
 $Session = New-PSSession -ConfigurationName Microsoft.Exchange –ConnectionUri ` 	https://outlook.office365.com/powershell-liveid/ -Credential $creds -Authentication Basic -AllowRedirection
@@ -95,7 +101,7 @@ ForEach ($spoO365GroupSite in $spoO365GroupSites){
 ##### Connect-MsolService for all below ######
 ##############################################
 
-# Restrict all Group creation with no authorized users$group = Get-MsolGroup -All | Where-Object {$_.DisplayName -eq “ENTER GROUP DISPLAY NAME HERE”} 
+# Restrict all Group creation with no authorized users
 $template = Get-MsolAllSettingTemplate | where-object {$_.displayname -eq “Group.Unified”}
 $setting = $template.CreateSettingsObject()
 $setting[“EnableGroupCreation”] = “false”
@@ -137,3 +143,71 @@ $value = $singlesettings.GetSettingsValue()
 $value["EnableGroupCreation"] = "false" 
 $value["GroupCreationAllowedGroupId"] = $group.ObjectId
 Set-MsolSettings -SettingId $settings.ObjectId -SettingsValue $value
+
+# Setting classification list, replace the comma separated values with what you would like
+$settings = Get-MsolAllSettings | where-object {$_.displayname -eq “Group.Unified”}
+$singlesettings = Get-MsolSettings -SettingId $settings.ObjectId
+$value = $singlesettings.GetSettingsValue()
+$value[“ClassificationList”] = “Internal, External, Confidential”
+Set-MsolSettings -SettingId $settings.ObjectId -SettingsValue $value
+
+# Setting usage guidelines URL 
+$settings = Get-MsolAllSettings | where-object {$_.displayname -eq “Group.Unified”}
+$singlesettings = Get-MsolSettings -SettingId $settings.ObjectId
+$value = $singlesettings.GetSettingsValue()
+$value[“UsageGuidelinesUrl”] = "https://concurrencyinc.sharepoint.com/sites/intranet/Pages/Groups-Usage-Guidelines.aspx"
+Set-MsolSettings -SettingId $settings.ObjectId -SettingsValue $value
+
+# External Group Access #
+#########################
+# Add external user to a group
+Add-UnifiedGroupLinks -Identity ‘Engineering Testers’ -LinkType Members -Links flayosc_outlook.com#EXT#
+
+# Restrict external access to a group with no setting set, this will not restrict guests from accessing already shared groups
+$template = Get-MsolAllSettingTemplate | where-object {$_.displayname -eq “Group.Unified”}
+$setting = $template.CreateSettingsObject()
+$setting["AllowToAddGuests"] = "False"
+$setting["AllowGuestsToAccessGroups"] = "True"
+New-MsolSettings –SettingsObject $setting
+
+
+# Restrict external access to a group without creating a new template
+$settings = Get-MsolAllSettings | where-object {$_.displayname -eq “Group.Unified”}
+$singlesettings = Get-MsolSettings -SettingId $settings.ObjectId
+$value = $singlesettings.GetSettingsValue()
+$value["AllowToAddGuests"] = "False"
+$value["AllowGuestsToAccessGroups"] = "True"
+Set-MsolSettings -SettingId $settings.ObjectId -SettingsValue $value
+
+# Turn off the switch so all guests instally no longer have access without creating a new template
+$settings = Get-MsolAllSettings | where-object {$_.displayname -eq “Group.Unified”}
+$singlesettings = Get-MsolSettings -SettingId $settings.ObjectId
+$value = $singlesettings.GetSettingsValue()
+$value["AllowGuestsToAccessGroups"] = "False"
+Set-MsolSettings -SettingId $settings.ObjectId -SettingsValue $value
+
+
+# Restrict external access to a specific group
+$group = Get-MsolGroup -All | Where-Object {$_.DisplayName -eq “ENTER GROUP DISPLAY NAME HERE”} 
+$groupsettings = Get-MsolAllSettings -TargetObjectId $group.ObjectId
+if($groupsettings)
+{
+    $value = $groupsettings.GetSettingsValue()
+    $value["AllowToAddGuests"] = "False"
+    Set-MsolSettings -SettingId $groupsettings.ObjectId -SettingsValue $Value -TargetObjectId $group.ObjectId
+    Write-Host "Settings existed for "$group.DisplayName 
+}
+else
+{
+    $template = Get-MsolSettingTemplate -TemplateId 08d542b9-071f-4e16-94b0-74abb372e3d9
+    $setting = $template.CreateSettingsObject()
+    $settingsnew = New-MsolSettings -SettingsObject $setting -TargetObjectId $group.ObjectId
+    $settings = Get-MsolAllSettings -TargetObjectId $group.ObjectId
+    $value = $GroupSettings.GetSettingsValue()
+    $value["AllowToAddGuests"] = "False"
+    Set-MsolSettings -SettingId $settings.ObjectId -SettingsValue $value -TargetObjectId $group.ObjectId
+    Write-Host "New Template created for "$group.DisplayName 
+}
+
+# Run a check to see if it worked 
+(Get-MsolAllSettings -TargetObjectId $group.ObjectId).GetSettingsValue() | foreach values 
