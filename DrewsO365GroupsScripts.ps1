@@ -1,6 +1,6 @@
 ###########################################
 # Thank you to all who helped contribute.  
-# Large thanks to Tony Redmond, Santhosh Balakrishnan, and Juan Carlos Martin for providing multiple scripts.  
+# Large thanks to Tony Redmond, Santhosh Balakrishnan, Juan Carlos Martin, Christophe Fiessinger for providing multiple scripts.  
 # This is mainly a collection of the great work that other people have put together into a central source and I am just the middle man
 ###########################################
 
@@ -42,9 +42,35 @@ New-EmailAddressPolicy -Name OtherGroups -IncludeUnifiedGroupRecipients -Enabled
 # Set access type (private or public)
 Set-UnifiedGroup -Identity "Legal" -AccessType Private
 
-# Add quota setting for Group Sites
+# Add quota setting for Group Sites ( must be connected to SPO through connect-sposervice)
 Get-SPOSite –Identity https://contoso.sharepoint.com/sites/<groupname> -detailed |fl
 Set-SPOSite –Identity https://contoso.sharepoint.com/sites/<groupname> -StorageQuota 3000 -StorageQuotaWarningLevel 2000 
+
+# Set newly created Groups SharePoint site quota automatically 
+#...................................
+# Setup in a daily timer job
+# Variables:
+# Cut off date in days
+# Storage quota in MB
+# Storage quota warning level in MB
+#...................................
+$cutoffdate = ((Get-Date).AddDays(-20))
+$quota = 500
+$warning = 400
+# Retrieve recently created groups
+$Groups = Get-UnifiedGroup | Where-Object {$_.WhenCreated -ge $cutoffdate} | Sort-Object whencreated | Select DisplayName, WhenCreated, SharePointSiteUrl
+# For each new group update quota accordinly if a team site exists.
+ForEach ($G in $Groups) { 
+    try 
+    { 
+        Set-SPOSite –Identity ($G.SharePointSiteUrl) -StorageQuota $quota -StorageQuotaWarningLevel $warning 
+        Write-Host "The following site quota was updated:" $G.SharePointSiteUrl
+    }
+    catch
+    { 
+        Write-Host "The following Groups does have a site:" $G.DisplayName 
+    }
+}
 
 # Allow users to send as the Office 365 Group
 $userAlias = “User”
@@ -148,7 +174,7 @@ Set-MsolSettings -SettingId $settings.ObjectId -SettingsValue $value
 $settings = Get-MsolAllSettings | where-object {$_.displayname -eq “Group.Unified”}
 $singlesettings = Get-MsolSettings -SettingId $settings.ObjectId
 $value = $singlesettings.GetSettingsValue()
-$value[“ClassificationList”] = “Internal, External, Confidential”
+$value[“ClassificationList”] = “Internal,External,Confidential”
 Set-MsolSettings -SettingId $settings.ObjectId -SettingsValue $value
 
 # Setting usage guidelines URL 
