@@ -1,0 +1,178 @@
+##### Connect-AzureAD for all below ######
+##############################################
+
+# Create a new template - Required if it doesn't exist and does not exist by default
+$template = Get-AzureADDirectorySettingTemplate | where-object {$_.displayname -eq “Group.Unified”}
+$setting = $template.CreateDirectorySetting()
+New-AzureADDirectorySetting -DirectorySetting $setting
+
+# Check Azure AD Group restriction settings
+Get-AzureADDirectorySetting | ForEach Values
+
+# Remove Azure AD Group restriction settings by removing all settings - This removes all settings not just group creation
+$settings = Get-AzureADDirectorySetting | where-object {$_.displayname -eq “Group.Unified”}
+Remove-AzureADDirectorySetting -ObjectId $settings.ObjectId 
+
+# Restrict all Group creation with no authorized users
+$settings = Get-AzureADDirectorySetting | where-object {$_.displayname -eq “Group.Unified”}
+$settings["EnableGroupCreation"] = "false" 
+Set-AzureADDirectorySetting -ObjectId $settings.Id -DirectorySetting $settings
+
+# Set group creation settings to false and remove security group directly without removing all settings
+$settings = Get-AzureADDirectorySetting | where-object {$_.displayname -eq “Group.Unified”}
+$settings["EnableGroupCreation"] = "false" 
+$settings["GroupCreationAllowedGroupId"] = ""
+Set-AzureADDirectorySetting -ObjectId $settings.Id -DirectorySetting $settings
+
+# Set group creation settings to true and include a security group without creating a new template
+$group = Get-AzureADGroup | Where-Object {$_.DisplayName -eq “ENTER GROUP DISPLAY NAME HERE”} 
+$settings = Get-AzureADDirectorySetting | where-object {$_.displayname -eq “Group.Unified”}
+$settings["EnableGroupCreation"] = "false" 
+$settings["GroupCreationAllowedGroupId"] = $group.ObjectId
+Set-AzureADDirectorySetting -ObjectId $settings.Id -DirectorySetting $settings
+
+# Setting classification list, replace the comma separated values with what you would like
+$settings = Get-AzureADDirectorySetting | where-object {$_.displayname -eq “Group.Unified”}
+$settings["ClassificationList"] = "Internal,External,Confidential"
+Set-AzureADDirectorySetting -ObjectId $settings.Id -DirectorySetting $settings
+
+# Setting usage guidelines URL 
+$settings = Get-AzureADDirectorySetting | where-object {$_.displayname -eq “Group.Unified”}
+$settings["UsageGuidelinesUrl"] = "https://domain.sharepoint.com/sites/intranet/Pages/Groups-Usage-Guidelines.aspx"
+Set-AzureADDirectorySetting -ObjectId $settings.Id -DirectorySetting $settings
+
+# Set everything in one
+$group = Get-AzureADGroup | Where-Object {$_.DisplayName -eq “ENTER GROUP DISPLAY NAME HERE”} 
+$settings = Get-AzureADDirectorySetting | where-object {$_.displayname -eq “Group.Unified”}
+$settings["ClassificationDescriptions"] = "" 
+$settings["DefaultClassification"] = ""
+$settings["PrefixSuffixNamingRequirement"] = "" 
+$settings["AllowGuestsToBeGroupOwner"] = "false"
+$settings["AllowGuestsToAccessGroups"] = "true" 
+$settings["GuestUsageGuidelinesUrl"] = "https://concurrencyinc.sharepoint.com/sites/intranet/Pages/Groups-Usage-Guidelines.aspx"
+$settings["GroupCreationAllowedGroupId"] = $group.ObjectId 
+$settings["AllowToAddGuests"] = "true"
+$settings["UsageGuidelinesUrl"] = "https://domain.sharepoint.com/sites/intranet/Pages/Groups-Usage-Guidelines.aspx" 
+$settings["ClassificationList"] = "Internal,External,Confidential"
+$settings["EnableGroupCreation"] = "true"
+Set-AzureADDirectorySetting -ObjectId $settings.Id -DirectorySetting $settings
+
+# External Group Access #
+#########################
+# Add external user to a group
+Add-UnifiedGroupLinks -Identity ‘Engineering Testers’ -LinkType Members -Links flayosc_outlook.com#EXT#
+
+# Set Guest usage guideline URL
+$settings = Get-AzureADDirectorySetting | where-object {$_.displayname -eq “Group.Unified”}
+$settings["GuestUsageGuidelinesUrl"] = "https://domain.sharepoint.com/sites/intranet/Pages/Groups-Usage-Guidelines.aspx"
+Set-AzureADDirectorySetting -ObjectId $settings.Id -DirectorySetting $settings
+
+# Restrict external access to a group, this will not restrict guests from accessing already shared groups
+$settings = Get-AzureADDirectorySetting | where-object {$_.displayname -eq “Group.Unified”}
+$settings["AllowToAddGuests"] = "False"
+$settings["AllowGuestsToAccessGroups"] = "True"
+Set-AzureADDirectorySetting -ObjectId $settings.Id -DirectorySetting $settings
+
+# Turn off the switch so all guests instally no longer have access without creating a new template
+$settings = Get-AzureADDirectorySetting | where-object {$_.displayname -eq “Group.Unified”}
+$settings["AllowGuestsToAccessGroups"] = "False"
+Set-AzureADDirectorySetting -ObjectId $settings.Id -DirectorySetting $settings
+
+# Restrict external access to a specific group
+# TO DO - UPDATE TO AZURE AD V2
+$group = Get-AzureADGroup | Where-Object {$_.DisplayName -eq “ENTER GROUP DISPLAY NAME HERE”} 
+$groupsettings = Get-AzureADDirectorySetting -TargetObjectId $group.ObjectId
+if($groupsettings)
+{
+    $value = $groupsettings.GetSettingsValue()
+    $value["AllowToAddGuests"] = "False"
+    Set-AzureADDirectorySetting -SettingId $groupsettings.ObjectId -SettingsValue $Value -TargetObjectId $group.ObjectId
+    Write-Host "Settings existed for "$group.DisplayName 
+}
+else
+{
+    $template = Get-MsolSettingTemplate -TemplateId 08d542b9-071f-4e16-94b0-74abb372e3d9
+    $setting = $template.CreateDirectorySetting()
+    $settingsnew = New-AzureADDirectorySetting -SettingsObject $setting -TargetObjectId $group.ObjectId
+    $settings = Get-AzureADDirectorySetting -TargetObjectId $group.ObjectId
+    $value = $GroupSettings.GetSettingsValue()
+    $value["AllowToAddGuests"] = "False"
+    Set-AzureADDirectorySetting -SettingId $settings.ObjectId -SettingsValue $value -TargetObjectId $group.ObjectId
+    Write-Host "New Template created for "$group.DisplayName 
+}
+
+# Run a check to see if it worked 
+(Get-AzureADDirectorySetting -TargetObjectId $group.ObjectId).GetSettingsValue() | foreach values 
+
+
+
+
+
+
+# Create function 
+#Name         : ClassificationDescriptions
+#Description  : A comma-delimited list of structured strings describing the classification values in the ClassificationList. The structure of the string is: Value: Description
+#Type         : System.String
+#DefaultValue : 
+
+#Name         : DefaultClassification
+#Description  : The classification value to be used by default for Unified Group creation.
+#Type         : System.String
+#DefaultValue : 
+
+#Name         : PrefixSuffixNamingRequirement
+#Description  : A structured string describing how a Unified Group displayName and mailNickname should be structured. Please refer to docs to discover how to structure a valid requirement.
+#Type         : System.String
+#DefaultValue : 
+
+#Name         : AllowGuestsToBeGroupOwner
+#Description  : Flag indicating if guests are allowed to be owner in any Unified Group.
+#Type         : System.Boolean
+#DefaultValue : false
+
+#Name         : AllowGuestsToAccessGroups
+#Description  : Flag indicating if guests are allowed to access any Unified Group resources.
+#Type         : System.Boolean
+#DefaultValue : true
+
+#Name         : GuestUsageGuidelinesUrl
+#Description  : A link to the Group Usage Guidelines for guests.
+#Type         : System.String
+#DefaultValue : 
+
+#Name         : GroupCreationAllowedGroupId
+#Description  : Guid of the security group that is always allowed to create Unified Groups.
+#Type         : System.Guid
+#DefaultValue : 
+
+#Name         : AllowToAddGuests
+#Description  : Flag indicating if guests are allowed in any Unified Group.
+#Type         : System.Boolean
+#DefaultValue : true
+
+#Name         : UsageGuidelinesUrl
+#Description  : A link to the Group Usage Guidelines.
+#Type         : System.String
+#DefaultValue : 
+
+#Name         : ClassificationList
+#Description  : A comma-delimited list of valid classification values that can be applied to Unified Groups.
+#Type         : System.String
+#DefaultValue : 
+
+#Name         : EnableGroupCreation
+#Description  : Flag indicating if group creation feature is on.
+#Type         : System.Boolean
+#DefaultValue : true
+
+$ClassificationDescription
+$DefaultClassification
+$PrefixSuffixNamingRequirement
+$AllowGuestsToBeGroupOwner
+$AllowGuestsToAccessGroups
+$GuestUsageGuidelinesUrl
+$GroupCreationAllowedGroupId
+$AllowToAddGuests
+$UsageGuidelinesUrl
+$ClassificationList
+$EnableGroupCreation
