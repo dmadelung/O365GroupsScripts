@@ -181,7 +181,7 @@ Set-MsolSettings -SettingId $settings.ObjectId -SettingsValue $value
 $settings = Get-MsolAllSettings | where-object {$_.displayname -eq “Group.Unified”}
 $singlesettings = Get-MsolSettings -SettingId $settings.ObjectId
 $value = $singlesettings.GetSettingsValue()
-$value[“UsageGuidelinesUrl”] = "https://concurrencyinc.sharepoint.com/sites/intranet/Pages/Groups-Usage-Guidelines.aspx"
+$value[“UsageGuidelinesUrl”] = "https://domain.sharepoint.com/sites/intranet/Pages/Groups-Usage-Guidelines.aspx"
 Set-MsolSettings -SettingId $settings.ObjectId -SettingsValue $value
 
 # External Group Access #
@@ -211,7 +211,6 @@ $singlesettings = Get-MsolSettings -SettingId $settings.ObjectId
 $value = $singlesettings.GetSettingsValue()
 $value["AllowGuestsToAccessGroups"] = "False"
 Set-MsolSettings -SettingId $settings.ObjectId -SettingsValue $value
-
 
 # Restrict external access to a specific group
 $group = Get-MsolGroup -All | Where-Object {$_.DisplayName -eq “ENTER GROUP DISPLAY NAME HERE”} 
