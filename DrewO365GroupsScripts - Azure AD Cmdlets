@@ -11,7 +11,7 @@ Get-AzureADDirectorySetting | ForEach Values
 
 # Remove Azure AD Group restriction settings by removing all settings - This removes all settings not just group creation
 $settings = Get-AzureADDirectorySetting | where-object {$_.displayname -eq “Group.Unified”}
-Remove-AzureADDirectorySetting -ObjectId $settings.ObjectId 
+Remove-AzureADDirectorySetting -ObjectId $settings.Id 
 
 # Restrict all Group creation with no authorized users
 $settings = Get-AzureADDirectorySetting | where-object {$_.displayname -eq “Group.Unified”}
