@@ -79,30 +79,7 @@ $settings["AllowGuestsToAccessGroups"] = "False"
 Set-AzureADDirectorySetting -ObjectId $settings.Id -DirectorySetting $settings
 
 # Restrict external access to a specific group
-# TO DO - UPDATE TO AZURE AD V2
-$group = Get-AzureADGroup | Where-Object {$_.DisplayName -eq “ENTER GROUP DISPLAY NAME HERE”} 
-$groupsettings = Get-AzureADDirectorySetting -TargetObjectId $group.ObjectId
-if($groupsettings)
-{
-    $value = $groupsettings.GetSettingsValue()
-    $value["AllowToAddGuests"] = "False"
-    Set-AzureADDirectorySetting -SettingId $groupsettings.ObjectId -SettingsValue $Value -TargetObjectId $group.ObjectId
-    Write-Host "Settings existed for "$group.DisplayName 
-}
-else
-{
-    $template = Get-MsolSettingTemplate -TemplateId 08d542b9-071f-4e16-94b0-74abb372e3d9
-    $setting = $template.CreateDirectorySetting()
-    $settingsnew = New-AzureADDirectorySetting -SettingsObject $setting -TargetObjectId $group.ObjectId
-    $settings = Get-AzureADDirectorySetting -TargetObjectId $group.ObjectId
-    $value = $GroupSettings.GetSettingsValue()
-    $value["AllowToAddGuests"] = "False"
-    Set-AzureADDirectorySetting -SettingId $settings.ObjectId -SettingsValue $value -TargetObjectId $group.ObjectId
-    Write-Host "New Template created for "$group.DisplayName 
-}
-
-# Run a check to see if it worked 
-(Get-AzureADDirectorySetting -TargetObjectId $group.ObjectId).GetSettingsValue() | foreach values 
+# TO DO - UPDATE TO AZURE AD V2 
 
 
 
