@@ -31,9 +31,15 @@ $settings["EnableGroupCreation"] = "false"
 $settings["GroupCreationAllowedGroupId"] = $group.ObjectId
 Set-AzureADDirectorySetting -Id $settings.Id -DirectorySetting $settings
 
+#### Classifications can be replaced by Sensitivity Labels for Sites, Teams, and Groups, see Enable MIP Below ####
 # Setting classification list, replace the comma separated values with what you would like
 $settings = Get-AzureADDirectorySetting | where-object {$_.displayname -eq “Group.Unified”}
 $settings["ClassificationList"] = "Internal,External,Confidential"
+Set-AzureADDirectorySetting -Id $settings.Id -DirectorySetting $settings
+
+# Settings to Enable MIP lables, to revert this change set to False
+$settings = Get-AzureADDirectorySetting | where-object {$_.displayname -eq “Group.Unified”}
+$settings["EnableMIPLabels"] = "True"
 Set-AzureADDirectorySetting -Id $settings.Id -DirectorySetting $settings
 
 # Setting usage guidelines URL 
@@ -44,6 +50,7 @@ Set-AzureADDirectorySetting -Id $settings.Id -DirectorySetting $settings
 # Set everything in one
 $group = Get-AzureADGroup | Where-Object {$_.DisplayName -eq “ENTER GROUP DISPLAY NAME HERE”} 
 $settings = Get-AzureADDirectorySetting | where-object {$_.displayname -eq “Group.Unified”}
+$settings["EnableMIPLabels"] = ""
 $settings["ClassificationDescriptions"] = "" 
 $settings["DefaultClassification"] = ""
 $settings["PrefixSuffixNamingRequirement"] = "" 
