@@ -2,7 +2,7 @@
 ##############################################
 
 # Create a new template - Required if it doesn't exist and does not exist by default
-$template = Get-AzureADDirectorySettingTemplate | where-object {$_.displayname -eq “Group.Unified”}
+$template = Get-AzureADDirectorySettingTemplate | where-object {$_.displayname -eq "Group.Unified"}
 $setting = $template.CreateDirectorySetting()
 New-AzureADDirectorySetting -DirectorySetting $setting
 
@@ -10,40 +10,40 @@ New-AzureADDirectorySetting -DirectorySetting $setting
 Get-AzureADDirectorySetting | ForEach Values
 
 # Remove Azure AD Group restriction settings by removing all settings - This removes all settings not just group creation
-$settings = Get-AzureADDirectorySetting | where-object {$_.displayname -eq “Group.Unified”}
+$settings = Get-AzureADDirectorySetting | where-object {$_.displayname -eq "Group.Unified"}
 Remove-AzureADDirectorySetting -Id $settings.Id 
 
 # Restrict all Group creation with no authorized users
-$settings = Get-AzureADDirectorySetting | where-object {$_.displayname -eq “Group.Unified”}
+$settings = Get-AzureADDirectorySetting | where-object {$_.displayname -eq "Group.Unified"}
 $settings["EnableGroupCreation"] = "false" 
 Set-AzureADDirectorySetting -Id $settings.Id -DirectorySetting $settings
 
 # Set group creation settings to false and remove security group directly without removing all settings
-$settings = Get-AzureADDirectorySetting | where-object {$_.displayname -eq “Group.Unified”}
+$settings = Get-AzureADDirectorySetting | where-object {$_.displayname -eq "Group.Unified"}
 $settings["EnableGroupCreation"] = "false" 
 $settings["GroupCreationAllowedGroupId"] = ""
 Set-AzureADDirectorySetting -Id $settings.Id -DirectorySetting $settings
 
 # Set group creation settings to true and include a security group without creating a new template
-$group = Get-AzureADGroup | Where-Object {$_.DisplayName -eq “ENTER GROUP DISPLAY NAME HERE”} 
-$settings = Get-AzureADDirectorySetting | where-object {$_.displayname -eq “Group.Unified”}
+$group = Get-AzureADGroup | Where-Object {$_.DisplayName -eq "ENTER GROUP DISPLAY NAME HERE"} 
+$settings = Get-AzureADDirectorySetting | where-object {$_.displayname -eq "Group.Unified"}
 $settings["EnableGroupCreation"] = "false" 
 $settings["GroupCreationAllowedGroupId"] = $group.ObjectId
 Set-AzureADDirectorySetting -Id $settings.Id -DirectorySetting $settings
 
 # Setting classification list, replace the comma separated values with what you would like
-$settings = Get-AzureADDirectorySetting | where-object {$_.displayname -eq “Group.Unified”}
+$settings = Get-AzureADDirectorySetting | where-object {$_.displayname -eq "Group.Unified"}
 $settings["ClassificationList"] = "Internal,External,Confidential"
 Set-AzureADDirectorySetting -Id $settings.Id -DirectorySetting $settings
 
 # Setting usage guidelines URL 
-$settings = Get-AzureADDirectorySetting | where-object {$_.displayname -eq “Group.Unified”}
+$settings = Get-AzureADDirectorySetting | where-object {$_.displayname -eq "Group.Unified"}
 $settings["UsageGuidelinesUrl"] = "https://domain.sharepoint.com/sites/intranet/Pages/Groups-Usage-Guidelines.aspx"
 Set-AzureADDirectorySetting -Id $settings.Id -DirectorySetting $settings
 
 # Set everything in one
-$group = Get-AzureADGroup | Where-Object {$_.DisplayName -eq “ENTER GROUP DISPLAY NAME HERE”} 
-$settings = Get-AzureADDirectorySetting | where-object {$_.displayname -eq “Group.Unified”}
+$group = Get-AzureADGroup | Where-Object {$_.DisplayName -eq "ENTER GROUP DISPLAY NAME HERE"} 
+$settings = Get-AzureADDirectorySetting | where-object {$_.displayname -eq "Group.Unified"}
 $settings["ClassificationDescriptions"] = "" 
 $settings["DefaultClassification"] = ""
 $settings["PrefixSuffixNamingRequirement"] = "" 
@@ -63,18 +63,18 @@ Set-AzureADDirectorySetting -Id $settings.Id -DirectorySetting $settings
 Add-UnifiedGroupLinks -Identity ‘Engineering Testers’ -LinkType Members -Links flayosc_outlook.com#EXT#
 
 # Set Guest usage guideline URL
-$settings = Get-AzureADDirectorySetting | where-object {$_.displayname -eq “Group.Unified”}
+$settings = Get-AzureADDirectorySetting | where-object {$_.displayname -eq "Group.Unified"}
 $settings["GuestUsageGuidelinesUrl"] = "https://domain.sharepoint.com/sites/intranet/Pages/Groups-Usage-Guidelines.aspx"
 Set-AzureADDirectorySetting -Id $settings.Id -DirectorySetting $settings
 
 # Restrict external access to a group, this will not restrict guests from accessing already shared groups
-$settings = Get-AzureADDirectorySetting | where-object {$_.displayname -eq “Group.Unified”}
+$settings = Get-AzureADDirectorySetting | where-object {$_.displayname -eq "Group.Unified"}
 $settings["AllowToAddGuests"] = "False"
 $settings["AllowGuestsToAccessGroups"] = "True"
 Set-AzureADDirectorySetting -Id $settings.Id -DirectorySetting $settings
 
 # Turn off the switch so all guests instally no longer have access without creating a new template
-$settings = Get-AzureADDirectorySetting | where-object {$_.displayname -eq “Group.Unified”}
+$settings = Get-AzureADDirectorySetting | where-object {$_.displayname -eq "Group.Unified"}
 $settings["AllowGuestsToAccessGroups"] = "False"
 Set-AzureADDirectorySetting -Id $settings.Id -DirectorySetting $settings
 
