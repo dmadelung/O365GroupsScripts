@@ -10,13 +10,13 @@ $Session = New-PSSession -ConfigurationName Microsoft.Exchange –ConnectionUri 
 Import-PSSession $Session
 
 # Create group
-New-UnifiedGroup –DisplayName “Legal” –Alias “Legal” –EmailAddresses legal@domain.com
+New-UnifiedGroup –DisplayName "Legal" –Alias "Legal" –EmailAddresses legal@domain.com
 
 # Rename group
-Set-UnifiedGroup -Identity “Legal” -Alias “Legal” -DisplayName “New Legal” -PrimarySmtpAddress legal@domain.com
+Set-UnifiedGroup -Identity "Legal" -Alias "Legal" -DisplayName "New Legal" -PrimarySmtpAddress legal@domain.com
 
 # View all subscribers, members or owners
-Get-UnifiedGroupLinks -Identity “Legal” -LinkType Subscribers
+Get-UnifiedGroupLinks -Identity "Legal" -LinkType Subscribers
 
 # Show detailed info for all groups
 Get-UnifiedGroup | 
@@ -73,27 +73,27 @@ ForEach ($G in $Groups) {
 }
 
 # Allow users to send as the Office 365 Group
-$userAlias = “User”
-$groupAlias = “TestSendAs”
+$userAlias = "User"
+$groupAlias = "TestSendAs"
 $groupsRecipientDetails = Get-Recipient -RecipientTypeDetails groupmailbox -Identity $groupAlias 
 Add-RecipientPermission -Identity $groupsRecipientDetails.Name -Trustee $userAlias -AccessRights SendAs
 
 # Remove groups email from GAL (global address list)
-$groupAlias = “TestGAL”
+$groupAlias = "TestGAL"
 Set-UnifiedGroup –Identity $groupAlias –HiddenFromAddressListsEnabled $true
 
 # Accept/Reject certain users from sending emails to groups
 # -AcceptMessagesOnlyFromSendersOrMembers or -RejectMessagesFromSendersOrMembers
-$groupAlias = “TestSend”
+$groupAlias = "TestSend"
 Set-UnifiedGroup –Identity $groupAlias –RejectMesssagesFromSendersOrMembers dmadelung@concurrency.com
 
 # Hide group members unless you are a member of the private group 
-$groupAlias = “TestHide”
+$groupAlias = "TestHide"
 Set-unifiedgroup –Identity $groupAlias –HiddenGroupMembershipEnabled:$true 
 
 # View all subscribers, members or owners of a group
 # Available LinkTypes: Members | Owners | Subscribers 
-$groupAlias = “TestView”
+$groupAlias = "TestView"
 Get-UnifiedGroupLinks -Identity $groupAlias -LinkType Subscribers
 
 # Find out which groups do not have owners
@@ -128,33 +128,33 @@ ForEach ($spoO365GroupSite in $spoO365GroupSites){
 ##############################################
 
 # Restrict all Group creation with no authorized users
-$template = Get-MsolAllSettingTemplate | where-object {$_.displayname -eq “Group.Unified”}
+$template = Get-MsolAllSettingTemplate | where-object {$_.displayname -eq "Group.Unified"}
 $setting = $template.CreateSettingsObject()
-$setting[“EnableGroupCreation”] = “false”
+$setting["EnableGroupCreation"] = "false"
 New-MsolSettings –SettingsObject $setting
 
 # Setup Azure AD Group restriction creation by allowed group ID, the declared group will be able to create O365 groups
-$group = Get-MsolGroup -All | Where-Object {$_.DisplayName -eq “ENTER GROUP DISPLAY NAME HERE”} 
-$template = Get-MsolAllSettingTemplate | where-object {$_.displayname -eq “Group.Unified”}
+$group = Get-MsolGroup -All | Where-Object {$_.DisplayName -eq "ENTER GROUP DISPLAY NAME HERE"} 
+$template = Get-MsolAllSettingTemplate | where-object {$_.displayname -eq "Group.Unified"}
 $setting = $template.CreateSettingsObject()
-$setting[“EnableGroupCreation”] = “false”
-$setting[“GroupCreationAllowedGroupId”] = $group.ObjectId
+$setting["EnableGroupCreation"] = "false"
+$setting["GroupCreationAllowedGroupId"] = $group.ObjectId
 New-MsolSettings –SettingsObject $setting
 
 # Check Azure AD Group restriction settings
 Get-MsolAllSettings | ForEach Values
 
 # Remove Azure AD Group restriction settings by removing all settings - This removes all settings not just group creation
-$settings = Get-MsolAllSettings | where-object {$_.displayname -eq “Group.Unified”}
+$settings = Get-MsolAllSettings | where-object {$_.displayname -eq "Group.Unified"}
 Remove-MsolSettings -SettingId $settings.ObjectId 
 
 # Set default settings for Azure AD Group restriction settings by creating a new default template - This sets all settings back to default
-$template = Get-MsolAllSettingTemplate | where-object {$_.displayname -eq “Group.Unified”}
+$template = Get-MsolAllSettingTemplate | where-object {$_.displayname -eq "Group.Unified"}
 $setting = $template.CreateSettingsObject()
 New-MsolSettings –SettingsObject $setting 
 
 # Set group creation settings to false and remove security group directly without removing all settings
-$settings = Get-MsolAllSettings | where-object {$_.displayname -eq “Group.Unified”}
+$settings = Get-MsolAllSettings | where-object {$_.displayname -eq "Group.Unified"}
 $singlesettings = Get-MsolSettings -SettingId $settings.ObjectId
 $value = $singlesettings.GetSettingsValue()
 $value["EnableGroupCreation"] = "false" 
@@ -162,8 +162,8 @@ $value["GroupCreationAllowedGroupId"] = ""
 Set-MsolSettings -SettingId $settings.ObjectId -SettingsValue $value
 
 # Set group creation settings to true and include a security group without creating a new template
-$group = Get-MsolGroup -All | Where-Object {$_.DisplayName -eq “ENTER GROUP DISPLAY NAME HERE”} 
-$settings = Get-MsolAllSettings | where-object {$_.displayname -eq “Group.Unified”}
+$group = Get-MsolGroup -All | Where-Object {$_.DisplayName -eq "ENTER GROUP DISPLAY NAME HERE"} 
+$settings = Get-MsolAllSettings | where-object {$_.displayname -eq "Group.Unified"}
 $singlesettings = Get-MsolSettings -SettingId $settings.ObjectId
 $value = $singlesettings.GetSettingsValue()
 $value["EnableGroupCreation"] = "false" 
@@ -171,17 +171,17 @@ $value["GroupCreationAllowedGroupId"] = $group.ObjectId
 Set-MsolSettings -SettingId $settings.ObjectId -SettingsValue $value
 
 # Setting classification list, replace the comma separated values with what you would like
-$settings = Get-MsolAllSettings | where-object {$_.displayname -eq “Group.Unified”}
+$settings = Get-MsolAllSettings | where-object {$_.displayname -eq "Group.Unified"}
 $singlesettings = Get-MsolSettings -SettingId $settings.ObjectId
 $value = $singlesettings.GetSettingsValue()
-$value[“ClassificationList”] = “Internal,External,Confidential”
+$value["ClassificationList"] = "Internal,External,Confidential"
 Set-MsolSettings -SettingId $settings.ObjectId -SettingsValue $value
 
 # Setting usage guidelines URL 
-$settings = Get-MsolAllSettings | where-object {$_.displayname -eq “Group.Unified”}
+$settings = Get-MsolAllSettings | where-object {$_.displayname -eq "Group.Unified"}
 $singlesettings = Get-MsolSettings -SettingId $settings.ObjectId
 $value = $singlesettings.GetSettingsValue()
-$value[“UsageGuidelinesUrl”] = "https://domain.sharepoint.com/sites/intranet/Pages/Groups-Usage-Guidelines.aspx"
+$value["UsageGuidelinesUrl"] = "https://domain.sharepoint.com/sites/intranet/Pages/Groups-Usage-Guidelines.aspx"
 Set-MsolSettings -SettingId $settings.ObjectId -SettingsValue $value
 
 # External Group Access #
@@ -190,7 +190,7 @@ Set-MsolSettings -SettingId $settings.ObjectId -SettingsValue $value
 Add-UnifiedGroupLinks -Identity ‘Engineering Testers’ -LinkType Members -Links flayosc_outlook.com#EXT#
 
 # Restrict external access to a group with no setting set, this will not restrict guests from accessing already shared groups
-$template = Get-MsolAllSettingTemplate | where-object {$_.displayname -eq “Group.Unified”}
+$template = Get-MsolAllSettingTemplate | where-object {$_.displayname -eq "Group.Unified"}
 $setting = $template.CreateSettingsObject()
 $setting["AllowToAddGuests"] = "False"
 $setting["AllowGuestsToAccessGroups"] = "True"
@@ -198,7 +198,7 @@ New-MsolSettings –SettingsObject $setting
 
 
 # Restrict external access to a group without creating a new template
-$settings = Get-MsolAllSettings | where-object {$_.displayname -eq “Group.Unified”}
+$settings = Get-MsolAllSettings | where-object {$_.displayname -eq "Group.Unified"}
 $singlesettings = Get-MsolSettings -SettingId $settings.ObjectId
 $value = $singlesettings.GetSettingsValue()
 $value["AllowToAddGuests"] = "False"
@@ -206,14 +206,14 @@ $value["AllowGuestsToAccessGroups"] = "True"
 Set-MsolSettings -SettingId $settings.ObjectId -SettingsValue $value
 
 # Turn off the switch so all guests instally no longer have access without creating a new template
-$settings = Get-MsolAllSettings | where-object {$_.displayname -eq “Group.Unified”}
+$settings = Get-MsolAllSettings | where-object {$_.displayname -eq "Group.Unified"}
 $singlesettings = Get-MsolSettings -SettingId $settings.ObjectId
 $value = $singlesettings.GetSettingsValue()
 $value["AllowGuestsToAccessGroups"] = "False"
 Set-MsolSettings -SettingId $settings.ObjectId -SettingsValue $value
 
 # Restrict external access to a specific group
-$group = Get-MsolGroup -All | Where-Object {$_.DisplayName -eq “ENTER GROUP DISPLAY NAME HERE”} 
+$group = Get-MsolGroup -All | Where-Object {$_.DisplayName -eq "ENTER GROUP DISPLAY NAME HERE"} 
 $groupsettings = Get-MsolAllSettings -TargetObjectId $group.ObjectId
 if($groupsettings)
 {
